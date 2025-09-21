@@ -31,23 +31,19 @@ This project implements multiple computer vision functions as required in the as
 
 ## Mode Control
 
-n → go to the next mode
+- Press the key shown in the table to switch modes  
+- Press **ESC** to quit the app  
 
-p → go to the previous mode
-
-ESC → quit the app
-
-Each mode corresponds to one assignment function:
-| Key shown | Function                |
-| --------- | ----------------------- |
-| 1         | Color: RGB ↔ Gray ↔ HSV |
-| 2         | Contrast & Brightness   |
-| 3         | Histogram               |
-| 4         | Gaussian Filter         |
-| 5         | Bilateral Filter        |
-| 6         | Canny Edge              |
-| 7         | Hough Lines             |
-| 8         | Panorama (custom)       |
-| 9         | Geometric Transform     |
-| 0         | Camera Calibration      |
-| -         | Augmented Reality (OBJ) |
+| Key | Function |
+|-----|----------|
+| 1 | Color: RGB ↔ Gray ↔ HSV |
+| 2 | Contrast & Brightness |
+| 3 | Histogram |
+| 4 | Gaussian Filter |
+| 5 | Bilateral Filter |
+| 6 | Canny Edge |
+| 7 | Hough Lines |
+| 8 | Panorama (custom) |
+| 9 | Geometric Transform |
+| 0 | Camera Calibration |
+| - | Augmented Reality (OBJ) |
