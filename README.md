@@ -12,7 +12,7 @@ This project implements multiple computer vision functions as required in the as
 8. Create a panorama (custom implementation, no OpenCV stitcher)  
 9. Image translation, rotation, and scale  
 10. Camera calibration  
-11. Augmented Reality with TREX model projection (.obj)
+11. Augmented Reality with TREX model projection
 
 ---
 
