@@ -17,15 +17,16 @@ This project implements multiple computer vision functions as required in the as
 ---
 
 ## Setup
-
 1. Clone the repository.
-2. cd into project directory. cd CV-Assignment-main
-3. Create a virtual environment
-4. Activate the environment
-5. Install dependencies:
-   pip install -r requirements.txt
+2. Into project directory.
+   **cd CV-Assignment-main**
+4. Create a virtual environment
+5. Activate the environment
+6. Install dependencies.
+   **pip install -r requirements.txt**
+   
 ## Run the App
-   python app.py
+   **python app.py**
 
 ## Mode Control
 
