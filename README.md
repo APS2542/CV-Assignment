@@ -17,17 +17,16 @@ This project implements multiple computer vision functions as required in the as
 ---
 
 ## Setup
-
-1. Clone the repository:
-   ```bash
-   git clone <your-repo-link>
-   cd CV-APP
-2. Create a virtual environment
-3. Activate the environment
-4. Install dependencies:
-   pip install -r requirements.txt
+1. Clone the repository.
+2. Into project directory.
+   **cd CV-Assignment-main**
+4. Create a virtual environment
+5. Activate the environment
+6. Install dependencies.
+   **pip install -r requirements.txt**
+   
 ## Run the App
-   python app.py
+   **python app.py**
 
 ## Mode Control
 
@@ -43,7 +42,7 @@ This project implements multiple computer vision functions as required in the as
 | 5 | Bilateral Filter |
 | 6 | Canny Edge |
 | 7 | Hough Lines |
-| 8 | Panorama (custom) |
+| 8 | Panorama |
 | 9 | Geometric Transform |
-| 0 | Camera Calibration |
-| - | Augmented Reality (OBJ) |
+| + | Camera Calibration |
+| - | Augmented Reality |
