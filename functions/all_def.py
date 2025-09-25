@@ -521,14 +521,14 @@ def _ensure_obj_loaded():
         "faces": faces,
         "loaded": True,
         "face_step": face_step,})
-    
+   
 def _draw_obj_model(img, proj_pts, faces):
     for f in faces:
-        if max(f) < len(proj_pts):
-            pts = proj_pts[f].reshape(-1, 2)
-            if len(pts) >= 3:
-                cv.fillConvexPoly(img, pts, (60, 200, 60), lineType=cv.LINE_AA)
-                cv.polylines(img, [pts], True, (0, 80, 0), 1, cv.LINE_AA)      
+       if max(f) < len(proj_pts):
+           pts = proj_pts[f].reshape(-1, 2)
+           if len(pts) >= 3:
+              cv.fillConvexPoly(img, pts, (0, 120, 0), lineType=cv.LINE_AA)
+              cv.polylines(img, [pts], True, (0, 80, 0), 1, cv.LINE_AA)      
     return img
 
 def _pick_largest_marker(corners):
