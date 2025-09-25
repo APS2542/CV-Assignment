@@ -12,8 +12,26 @@ _CALRUN = {"board": (9, 6),
     "imgpoints": [],
     "last_corners": None,
     "rms": None}
-_AR = {"inited": False, "dict": None, "params": None, "detector": None}
-CAP = None 
+ARUCO_DICT = cv.aruco.DICT_6X6_250
+MARKER_LENGTH_M = 0.05     
+if "_AROBJ" not in globals():
+    _AROBJ = {"path": "data/trex_model.obj",   
+        "scale": 3,                   
+        "face_step": 1,                  
+        "max_faces": 30000,              
+        "verts": None, "faces": None, "loaded": False,}
+_CALIB = {
+    "loaded": False, "mtx": None, "dist": None,
+    "newmtx": None, "roi": (0,0,0,0),
+    "map1": None, "map2": None,
+    "map_res": None, "alpha": 1.0,
+    "fallback": False,}
+CAP = None
+
+#0 Normal mode
+def normal_demo(img, state=None):
+    return img 
+
 #1 convert image color (RGB > Grey > HSV)
 def color_demo(img):
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -25,12 +43,12 @@ def color_demo(img):
     
     def _label(im, text):
         out = im.copy()
-        cv.putText(out, text, (15, 35), cv.FONT_HERSHEY_SIMPLEX, 1.0, (0,255,0), 2, cv.LINE_AA)
+        cv.putText(out, text, (15, 60), cv.FONT_HERSHEY_SIMPLEX, 1.0, (0,0,0), 2, cv.LINE_AA)
         return out
 
     left   = _label(img,        "BGR (camera)")
     middle = _label(gray_bgr,   "Gray")
-    right  = _label(hue_vis_bgr,"HSV (Hue visualization)")
+    right  = _label(hue_vis_bgr,"HSV")
 
     return cv.hconcat([left, middle, right])
 
@@ -141,15 +159,24 @@ def canny_demo(img):
 
 
 #7. Line detection using Hough Transform
-def hough_demo(img, threshold=80, minLineLength=50, maxLineGap=10,thickness=5):
+def hough_demo(img):
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     edges = cv.Canny(gray, 100, 200)
-    c = img.copy()
-    lines = cv.HoughLinesP(edges, 1, np.pi/180, threshold,minLineLength, maxLineGap)
+    Red_line = img.copy()
+    lines = cv.HoughLines(edges, 1, np.pi/180, 150)
     if lines is not None:
-        for x1, y1, x2, y2 in lines[:, 0]:
-            cv.line(c, (x1, y1), (x2, y2), (0, 0, 255),thickness)
-    return c
+        for rho, theta in lines[:, 0]:
+        # Convert polar coords (rho, theta) to Cartesian direction
+          a = np.cos(theta)  # x-component of the unit direction vector
+          b = np.sin(theta)  # y-component of the unit direction vector
+          x0 = a * rho
+          y0 = b * rho
+          x1 = int(x0 + 1000 * (-b))
+          y1 = int(y0 + 1000 * (a))
+          x2 = int(x0 - 1000 * (-b))
+          y2 = int(y0 - 1000 * (a))
+          cv.line(Red_line, (x1, y1), (x2, y2), (0, 0, 255), 2)
+    return Red_line
 
 #8. Panorama
 def stitch_images(images, ratio=0.75, min_matches=10, ransac_reproj=4.0):
@@ -221,8 +248,8 @@ def capture_images(num_frames=3, cam_index=0, win_name="CV-APP"):
         if not ok: break
 
         preview = frame.copy()
-        cv.putText(preview, f"Panorama: {len(images)}/{num_frames}  (SPACE=shoot, ESC=cancel)",
-                   (20,40), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2)
+        cv.putText(preview, f"Panorama: {len(images)}/{num_frames}  (SPACE=capture, ESC=cancel)",
+                   (20,40), cv.FONT_HERSHEY_SIMPLEX, 0.75, (0,0,0), 2)
         x, y, margin, tw = 20, preview.shape[0]-20, 8, 160
         for img in images[-3:][::-1]:  
             th = int(img.shape[0] * (tw / img.shape[1]))
@@ -260,7 +287,6 @@ def panorama_demo(img, state=None):
     else:
         return img
 
-
 #9. Image translation, rotation, and scale
 def transform_demo(img):
     win = "Image transform"
@@ -274,7 +300,7 @@ def transform_demo(img):
         cv.createTrackbar("Angle",       win, 180, 360, lambda x: None)
         cv.createTrackbar("Translate X", win, 150, 300, lambda x: None)
         cv.createTrackbar("Translate Y", win, 100, 200, lambda x: None)
-        cv.createTrackbar("Scale x0.01", win, 100, 200, lambda x: None)
+        cv.createTrackbar("Scale", win, 100, 200, lambda x: None)
 
     rows, cols = img.shape[:2]
     center = (cols/2, rows/2)
@@ -282,25 +308,22 @@ def transform_demo(img):
     angle = cv.getTrackbarPos("Angle", win) - 180
     tx    = cv.getTrackbarPos("Translate X", win) - 150
     ty    = cv.getTrackbarPos("Translate Y", win) - 100
-    scale = cv.getTrackbarPos("Scale x0.01", win) / 100.0
+    scale = cv.getTrackbarPos("Scale", win) / 100.0
 
     M = cv.getRotationMatrix2D(center, angle, scale)
     M[0, 2] += tx
     M[1, 2] += ty
 
-
     out = cv.warpAffine(
         img, M, (cols, rows),
         flags=cv.INTER_LINEAR,
         borderMode=cv.BORDER_CONSTANT, borderValue=(47,53,66))
-
-
-    cv.putText(out, f"Angle={angle}, tx={tx}, ty={ty}, scale={scale:.2f}",
-                (20,40), cv.FONT_HERSHEY_SIMPLEX, 1.0, (255,255,255), 2, cv.LINE_AA)
-
     return out
 
 #10. Calibrate the camera
+BGCOLOR = (47, 53, 66)
+def _draw_text(img, text, org=(20, 40), scale=0.8, color=(255,255,255), thickness=2):
+    cv.putText(img, str(text), org, cv.FONT_HERSHEY_SIMPLEX, scale, color, thickness, cv.LINE_AA)
 
 def _mk_objp(board, square_mm):
     w, h = board
@@ -318,11 +341,15 @@ def _try_find_corners(gray, board):
     if not found and hasattr(cv, "findChessboardCornersSB"):
         try:
             found, corners = cv.findChessboardCornersSB(gray, pattern_size)
-        except:
+        except Exception:
             pass
-    if found:
+    if found and corners is not None:
+        h, w = gray.shape[:2]
+        win = max(5, int(min(w, h) * 0.01)) 
+        if win % 2 == 0:
+            win += 1
         term = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-        corners = cv.cornerSubPix(gray, corners, (11,11), (-1,-1), term)
+        corners = cv.cornerSubPix(gray, corners, (win, win), (-1,-1), term)
     return found, corners
 
 def _mean_corner_shift(c1, c2):
@@ -335,6 +362,14 @@ def _mean_corner_shift(c1, c2):
         return 1e9
     return float(np.linalg.norm(a[:n] - b[:n], axis=1).mean())
 
+def _enough_motion(prev_corners, now_corners, frame_size, min_px=2.0, min_pct=0.005):
+    if prev_corners is None or now_corners is None:
+        return True
+    w, h = frame_size
+    diag = (w*w + h*h) ** 0.5
+    thr = max(min_px, min_pct * diag)
+    return _mean_corner_shift(prev_corners, now_corners) > thr
+
 def _save_calib(mtx, dist, path="calibration.npz"):
     np.savez(path, mtx=mtx, dist=dist)
 
@@ -344,150 +379,268 @@ def _ensure_maps_for_size(img_size, alpha=1.0):
     need_new = (
         _CALIB.get("map_res") != (w, h) or
         _CALIB.get("alpha") != float(alpha) or
-        _CALIB.get("map1") is None or _CALIB.get("map2") is None
-    )
+        _CALIB.get("map1") is None or _CALIB.get("map2") is None)
     if need_new:
         newK, roi = cv.getOptimalNewCameraMatrix(K, dist, (w, h), alpha, (w, h))
         map1, map2 = cv.initUndistortRectifyMap(K, dist, None, newK, (w, h), cv.CV_16SC2)
         _CALIB.update({
             "newmtx": newK, "roi": roi,
             "map1": map1, "map2": map2,
-            "map_res": (w, h), "alpha": float(alpha)
-        })
+            "map_res": (w, h), "alpha": float(alpha)})
+
+def _undistort_fullsize(img, alpha=1.0):
+    h, w = img.shape[:2]
+    _ensure_maps_for_size((w, h), alpha)
+    undist = cv.remap(img, _CALIB["map1"], _CALIB["map2"], interpolation=cv.INTER_LINEAR)
+    x, y, w2, h2 = _CALIB["roi"]
+
+    if w2 > 0 and h2 > 0:
+        und = undist[y:y+h2, x:x+w2]
+        top, left = y, x
+        bottom = max(0, h - (top + und.shape[0]))
+        right  = max(0, w - (left + und.shape[1]))
+        und = cv.copyMakeBorder(und, top, bottom, left, right, cv.BORDER_CONSTANT, value=BGCOLOR)
+        und = und[:h, :w]
+    else:
+        und = undist
+    if und.shape[:2] != (h, w):
+        und = cv.resize(und, (w, h), interpolation=cv.INTER_LINEAR)
+    return und
 
 def calibrate_demo(img, state=None, alpha_preview=1.0):
-
     out = img.copy()
     h, w = img.shape[:2]
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
-    if _CALIB.get("loaded", False):
-        _ensure_maps_for_size((w, h), alpha_preview)
-        undist = cv.remap(img, _CALIB["map1"], _CALIB["map2"], interpolation=cv.INTER_LINEAR)
-        x, y, w2, h2 = _CALIB["roi"]
-        if w2 > 0 and h2 > 0:
-            und = undist[y:y+h2, x:x+w2]
-            und = cv.copyMakeBorder(und, 0, h - und.shape[0], 0, w - und.shape[1],
-                                    cv.BORDER_CONSTANT, value=(47,53,66))
-        else:
-            und = undist
-        out = cv.hconcat([img, und])
-        _draw_text(out, "Calibrated view (Before | After)", (20, 40), 0.9, (0,255,0))
-        if _CALRUN["rms"] is not None:
-            _draw_text(out, f"RMS reprojection error: {_CALRUN['rms']:.3f}", (20, 80), 0.8, (0,255,255))
-        return out
-
-    
+    if _CALIB.get("loaded", False) and _CALRUN.get("done", False) and len(_CALRUN.get("objpoints", [])) == 0:
+        _draw_text(out, "Calibration successful!", (20, 60), 0.75, (0, 255, 0))
+        if _CALRUN.get("rms") is not None:
+            _draw_text(out, f"RMS reprojection error: {_CALRUN['rms']:.3f}", (20, 100), 0.5, (255, 255, 255))
+            _draw_text(out, "Camera matrix and distortion coefficients will display in your terminal", (20, 140), 0.5, (255, 255, 255))
+        return out 
     found, corners = _try_find_corners(gray, _CALRUN["board"])
     if found:
         cv.drawChessboardCorners(out, _CALRUN["board"], corners, found)
+        now = time.time()
+    if (found and now >= _CALRUN["next_t"] and
+        len(_CALRUN["objpoints"]) < _CALRUN["shots_needed"] and
+        _enough_motion(_CALRUN["last_corners"], corners, (w, h))):
 
-    now = time.time()
-    if found and now >= _CALRUN["next_t"] and len(_CALRUN["objpoints"]) < _CALRUN["shots_needed"]:
-        shift = _mean_corner_shift(_CALRUN["last_corners"], corners)
-        if shift > 2.5:  # require some motion to avoid duplicates
-            _CALRUN["objpoints"].append(_mk_objp(_CALRUN["board"], _CALRUN["square_mm"]))
-            _CALRUN["imgpoints"].append(corners.reshape(-1,1,2))
-            _CALRUN["last_corners"] = corners.copy()
-            _CALRUN["next_t"] = now + _CALRUN["interval"]
-            _draw_text(out, f"Captured {_CALRUN['objpoints'].__len__()}/{_CALRUN['shots_needed']}",
-                       (20, 120), 0.9, (0,255,255))
+        _CALRUN["objpoints"].append(_mk_objp(_CALRUN["board"], _CALRUN["square_mm"]))
+        _CALRUN["imgpoints"].append(corners.reshape(-1,1,2))
+        _CALRUN["last_corners"] = corners.copy()
+        _CALRUN["next_t"] = now + _CALRUN["interval"]
 
-    if len(_CALRUN["objpoints"]) >= _CALRUN["shots_needed"]:
+    if len(_CALRUN["objpoints"]) >= _CALRUN["shots_needed"] and not _CALRUN.get("done", False):
         img_size = (w, h)
         rms, K, dist, rvecs, tvecs = cv.calibrateCamera(
-            _CALRUN["objpoints"], _CALRUN["imgpoints"], img_size, None, None)
+            _CALRUN["objpoints"], _CALRUN["imgpoints"], img_size, None, None
+        )
         _CALRUN["rms"] = float(rms)
+        _CALRUN["done"] = True
+
         _CALIB.update({
             "loaded": True,
             "mtx": K.astype(np.float32),
             "dist": dist.astype(np.float32),
-            "fallback": False
-        })
+            "fallback": False})
         _ensure_maps_for_size(img_size, alpha_preview)
         _save_calib(K, dist)
-        _draw_text(out, f"Calibrated! RMS={_CALRUN['rms']:.3f}  saved: calibration.npz",
-                   (20, 80), 0.8, (0,255,0))
 
-        undist = cv.remap(img, _CALIB["map1"], _CALIB["map2"], interpolation=cv.INTER_LINEAR)
-        x, y, w2, h2 = _CALIB["roi"]
-        if w2 > 0 and h2 > 0:
-            und = undist[y:y+h2, x:x+w2]
-            und = cv.copyMakeBorder(und, 0, h - und.shape[0], 0, w - und.shape[1],
-                                    cv.BORDER_CONSTANT, value=(47,53,66))
-        else:
-            und = undist
-        out = cv.hconcat([img, und])
-        return out
+        print("\nCalibration successful!")
+        print("Camera Matrix (mtx):")
+        print(K)
+        print("\nDistortion Coefficients (dist):")
+        print(dist)
+        print(f"\nRMS reprojection error: {_CALRUN['rms']:.6f}")
+        print(f"Image size used: {w} x {h}\n")
 
-    _draw_text(out, "Show a 9x6 chessboard. Move/tilt; it will auto-capture.",
-               (20, 40), 0.9, (0,255,255))
-    _draw_text(out, f"Captured: {len(_CALRUN['objpoints'])}/{_CALRUN['shots_needed']}",
-               (20, 80), 0.9, (255,255,0))
-    _draw_text(out, "Tip: vary distance and angle for better accuracy.",
-               (20, 120), 0.8, (200,200,200))
+        _CALRUN["objpoints"].clear()
+        _CALRUN["imgpoints"].clear()
+
+        _draw_text(out, "Calibration successful!", (20, 60), 0.5, (0, 0, 0))
+        _draw_text(out, f"RMS error: {_CALRUN['rms']:.3f}", (20, 100), 0.5, (0, 0, 0))
+        return out 
+
+    _draw_text(out, "Show a 9x6 chessboard.", (20, 60), 0.75, (0,0,0))
+    _draw_text(out, f"Captured: {len(_CALRUN['objpoints'])}/{_CALRUN['shots_needed']}", (20, 100), 0.75, (0,0,0))
     return out
 
 def calib_reset():
-    """Call when switching modes to reset the capture state (keeps existing _CALIB)."""
-    _CALRUN.update({
-        "objpoints": [], "imgpoints": [],
-        "last_corners": None, "next_t": 0.0, "rms": None
-    })
+    _CALRUN.update({"objpoints": [], "imgpoints": [],"last_corners": None, "next_t": 0.0,"rms": None, "done": False})
+    
+#11. Augmented Reality     
+def _load_obj(path):
+    verts, faces = [], []
+    with open(path, "r", encoding="utf-8", errors="ignore") as f:
+        for ln in f:
+            ln = ln.strip()
+            if not ln or ln.startswith("#"):
+                continue
+            if ln.startswith("v "):
+                _, x, y, z = ln.split()[:4]
+                verts.append([float(x), float(y), float(z)])
+            elif ln.startswith("f "):
+                parts = ln.split()[1:]
+                idx = [int(p.split("/")[0]) - 1 for p in parts] 
+                if len(idx) >= 3:
+                    faces.append(idx)
+    return np.asarray(verts, np.float32), faces
 
-#11. Augmented Reality
-def ar_demo(img, state=None, calib_path="calibration.npz", marker_length_m=0.05):
-   
-    K, dist, used_fallback = _ensure_calib(calib_path)
-    detector = _ensure_aruco()
+def _ensure_obj_loaded():
+    if _AROBJ.get("loaded", False):
+        return
+    path = _AROBJ["path"]
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"OBJ not found: {path}")
 
-    out = img.copy()
+    verts, faces = _load_obj(path)
+    if len(verts) == 0 or len(faces) == 0:
+        raise ValueError("OBJ has no vertices or faces")
+    verts = verts - verts.mean(axis=0, keepdims=True)
+    max_len = float(np.linalg.norm(verts, axis=1).max())
+    if max_len > 0:
+        verts = verts / max_len
+
+    Rx = np.array([[1,0,0],
+               [0,0,-1],
+               [0,1,0]], np.float32)   
+    verts = verts @ Rx.T
+    scale = float(_AROBJ.get("scale", 0.2))
+    verts = verts * scale
+    max_faces = int(_AROBJ.get("max_faces", 5000))
+    face_step = int(_AROBJ.get("face_step", 4))
+    if len(faces) > max_faces:
+        step = int(np.ceil(len(faces) / max_faces))
+        faces = faces[::step]
+        face_step = max(face_step, step)
+        print(f"[AR] OBJ decimated: {len(faces)} faces (step={step})")
+
+    _AROBJ.update({
+        "verts": verts.astype(np.float32),
+        "faces": faces,
+        "loaded": True,
+        "face_step": face_step,})
+    
+def _draw_obj_model(img, proj_pts, faces):
+    for f in faces:
+        if max(f) < len(proj_pts):
+            pts = proj_pts[f].reshape(-1, 2)
+            if len(pts) >= 3:
+                cv.fillConvexPoly(img, pts, (60, 200, 60), lineType=cv.LINE_AA)
+                cv.polylines(img, [pts], True, (0, 80, 0), 1, cv.LINE_AA)      
+    return img
+
+def _pick_largest_marker(corners):
+    if not corners:
+        return 0
+    perims = [cv.arcLength(np.int32(c[0]), True) for c in corners]
+    return int(np.argmax(perims))
+
+def _aruco_detect(gray, dict_id):
+    aruco = cv.aruco
+    dictionary = aruco.getPredefinedDictionary(dict_id)
+    if hasattr(aruco, "ArucoDetector") and hasattr(aruco, "DetectorParameters"):
+        params = aruco.DetectorParameters()
+        detector = aruco.ArucoDetector(dictionary, params)
+        return detector.detectMarkers(gray) 
+    params = None
+    if hasattr(aruco, "DetectorParameters_create"):
+        params = aruco.DetectorParameters_create()
+    elif hasattr(aruco, "DetectorParameters"):
+        params = aruco.DetectorParameters()
+    return aruco.detectMarkers(gray, dictionary, parameters=params)
+
+def _pose_from_marker(corners, idx, marker_len_m, K, dist):
+    aruco = cv.aruco
+    if hasattr(aruco, "estimatePoseSingleMarkers"):
+        rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(corners, marker_len_m, K, dist)
+        return rvecs[idx], tvecs[idx]
+    half = marker_len_m / 2.0
+    objp = np.array([[-half,  half, 0],
+                     [ half,  half, 0],
+                     [ half, -half, 0],
+                     [-half, -half, 0]], dtype=np.float32)
+    imgp = corners[idx][0].astype(np.float32) 
+    ok, rvec, tvec = cv.solvePnP(objp, imgp, K, dist, flags=cv.SOLVEPNP_IPPE_SQUARE)
+    if not ok:
+        ok, rvec, tvec = cv.solvePnP(objp, imgp, K, dist)
+        if not ok:
+            raise cv.error("solvePnP failed")
+    return rvec, tvec
+
+def ar_demo(img, state=None):
+    try:
+        _ensure_obj_loaded()
+    except Exception as e:
+        cv.putText(img, f"OBJ load error: {e}", (20, 80),
+                   cv.FONT_HERSHEY_SIMPLEX, 0.8, (255,0,0), 2, cv.LINE_AA)
+        return img
+
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    corners, ids, _ = detector.detectMarkers(gray)
+
+    if "_CALIB" in globals() and isinstance(_CALIB, dict) and _CALIB.get("loaded", False):
+        K, dist = _CALIB["mtx"], _CALIB["dist"]
+    else:
+        if not os.path.exists("calibration.npz"):
+            cv.putText(img, "No calibration.npz — calibrate first (+).",
+                       (20, 80), cv.FONT_HERSHEY_SIMPLEX, 0.8, (255,0,0), 2, cv.LINE_AA)
+            return img
+        with np.load("calibration.npz") as X:
+            K = X["mtx"].astype(np.float32)
+            dist = X["dist"].astype(np.float32)
+
+    if not hasattr(cv, "aruco"):
+        cv.putText(img, "cv2.aruco missing (install opencv-contrib-python).",
+                   (20, 80), cv.FONT_HERSHEY_SIMPLEX, 0.8, (255,0,0), 2, cv.LINE_AA)
+        return img
+
+    try:
+        corners, ids, _ = _aruco_detect(gray, ARUCO_DICT)
+    except AttributeError as e:
+        cv.putText(img, f"aruco API missing: {str(e)}", (20, 80),
+                   cv.FONT_HERSHEY_SIMPLEX, 0.8, (255,0,0), 2, cv.LINE_AA)
+        return img
 
     if ids is None or len(ids) == 0:
-        _draw_text(out, "AR mode: No ArUco markers detected", (20, 40), 0.9, (0,0,255))
-        if used_fallback:
-            _draw_text(out, "WARNING: calibration.npz not found (using fallback intrinsics)", (20, 80), 0.7, (0,255,255))
-        return out
+        cv.putText(img, "Show ArUco marker",
+                   (20, 80), cv.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,0), 2, cv.LINE_AA)
+        return img
 
-    cv.aruco.drawDetectedMarkers(out, corners, ids)
+    cv.aruco.drawDetectedMarkers(img, corners, ids)
 
-    rvecs, tvecs, _objPoints = cv.aruco.estimatePoseSingleMarkers(corners, marker_length_m, K, dist)
+    idx = _pick_largest_marker(corners)
+    try:
+        rvec, tvec = _pose_from_marker(corners, idx, MARKER_LENGTH_M, K, dist)
+    except cv.error as e:
+        cv.putText(img, f"Pose failed: {e}", (20, 80),
+                   cv.FONT_HERSHEY_SIMPLEX, 0.8, (255,0,0), 2, cv.LINE_AA)
+        return img
 
-    L = float(marker_length_m)
-    obj_pts = np.float32([
-        [0,0,0], [L,0,0], [L,L,0], [0,L,0],       # bottom square
-        [0,0,-L],[L,0,-L],[L,L,-L],[0,L,-L]       # top square (negative z upward from board)
-    ])
+    verts_m = (_AROBJ["verts"] / (1.0 / MARKER_LENGTH_M)).astype(np.float32)
+    verts_m += np.array([0, 0, -MARKER_LENGTH_M * 0.5], np.float32)
 
-    rvec, tvec = rvecs[0], tvecs[0]
-    img_pts, _ = cv.projectPoints(obj_pts, rvec, tvec, K, dist)
-    img_pts = np.int32(img_pts).reshape(-1, 2)
+    try:
+        R, _ = cv.Rodrigues(rvec)
+        verts_cam = (R @ verts_m.T).T + tvec.reshape(1, 3)
+        depth = verts_cam[:, 2]
+        faces = _AROBJ["faces"]
+        order = np.argsort([float(np.mean(depth[f])) for f in faces])[::-1]
+        sorted_faces = [faces[i] for i in order]
 
-    faces = [
-        [0,1,2,3],  # bottom
-        [4,5,6,7],  # top
-        [0,1,5,4],  # side 1
-        [1,2,6,5],  # side 2
-        [2,3,7,6],  # side 3
-        [3,0,4,7],  # side 4
-    ]
-    face_colors = [
-        (255, 0, 0),    # blue
-        (0, 255, 0),    # green
-        (0, 0, 255),    # red
-        (255, 255, 0),  # cyan
-        (255, 0, 255),  # magenta
-        (0, 255, 255),  # yellow
-    ]
-    for idx, face in enumerate(faces):
-        cv.fillConvexPoly(out, img_pts[face], face_colors[idx], lineType=cv.LINE_AA)
-    for face in faces:
-        cv.polylines(out, [img_pts[face]], True, (0,0,0), 2, cv.LINE_AA)
+        imgpts, _ = cv.projectPoints(verts_m, rvec, tvec, K, dist)
+        imgpts = np.int32(imgpts).reshape(-1, 2)
 
-    _draw_text(out, f"AR: id={int(ids[0])}, marker={marker_length_m*1000:.0f} mm", (20, 40), 0.9)
-    if used_fallback:
-        _draw_text(out, "WARNING: fallback intrinsics (add calibration.npz for accuracy)", (20, 80), 0.7, (0,255,255))
+        _draw_obj_model(img, imgpts, sorted_faces)
 
-    return out
+    except cv.error as e:
+        cv.putText(img, f"Project err: {e}", (20, 40),
+                   cv.FONT_HERSHEY_SIMPLEX, 0.8, (255,0,0), 2, cv.LINE_AA)
+        return img
+
+    cv.putText(img, "AR: T-REX", (20, 80),
+               cv.FONT_HERSHEY_SIMPLEX, 0.8, (0,255,0), 2, cv.LINE_AA)
+    return img
+
+
+
