@@ -1,9 +1,6 @@
 # CV-APP-Assignment #1
 Interactive Computer Vision demo application built with OpenCV.
-Includes multiple modes: color conversion, image enhancement, filtering, edge detection, panorama stitching, geometric transforms, camera calibration, and Augmented Reality (AR) with ArUco markers.
-
-This project implements multiple computer vision functions:
-
+Includes multiple modes: 
 1. Convert image color between RGB ↔ Grey ↔ HSV  
 2. Contrast and brightness adjustment  
 3. Show image histogram  
@@ -17,7 +14,6 @@ This project implements multiple computer vision functions:
 11. Augmented Reality with TREX model projection
 
 ----------------------------------------------------
-
 ## Setup and Run the Application
 1. Clone the repository.
    ```bash 
@@ -25,20 +21,22 @@ This project implements multiple computer vision functions:
 2. Into project directory.
    ```bash
    cd CV-Assignment
-4. Create a virtual environment
+4. Create a virtual environment.
    ```bash
    uv venv .venv
+5. Activate the environment
+   ```bash
    source .venv/bin/activate   # Linux / macOS
    .venv\Scripts\activate      # Windows PowerShell
-5. Activate the environment
-6. Install dependencies.
+7. Install dependencies.
    ```bash
    uv pip install -r requirements.txt
-7. Run the app.
+8. Run the application
+   ```bash
    python app.py 
 -------------------------------------------------------------------
 ## Mode Controls
-- Press key 0 to return to Normal Mode
+- Press key 0 to Normal Mode
 - Press keys 1–9 to switch between other modes
 - Press + to run Camera Calibration
 - Press - to run Augmented Reality (AR)
