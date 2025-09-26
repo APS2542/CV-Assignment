@@ -1,4 +1,4 @@
-# CV-APP-Assignment #1
+# **CV-APP-Assignment #1**
 Interactive Computer Vision demo application built with OpenCV.
 Includes multiple modes: 
 1. Convert image color between RGB ↔ Grey ↔ HSV  
@@ -8,13 +8,13 @@ Includes multiple modes:
 5. Bilateral filter with changeable parameters  
 6. Canny edge detection  
 7. Line detection using Hough Transform  
-8. Create a panorama (custom implementation, no OpenCV stitcher)  
+8. Create a panorama 
 9. Image translation, rotation, and scale  
 10. Camera calibration  
 11. Augmented Reality with TREX model projection
 
 ----------------------------------------------------
-## Setup and Run the Application
+## **Setup & Run the Application**
 1. Clone the repository.
    ```bash 
    https://github.com/APS2542/CV-Assignment.git
@@ -35,14 +35,14 @@ Includes multiple modes:
    ```bash
    python app.py 
 -------------------------------------------------------------------
-## Mode Controls
+## **Mode Controls**
 - Press key 0 to Normal Mode
 - Press keys 1–9 to switch between other modes
 - Press + to run Camera Calibration
 - Press - to run Augmented Reality (AR)
 - Press ESC to quit
 ------------------------------------------------------------------
-## Mode Overview
+## **Mode Overview**
 | Key   | Mode Description                                   |
 | ----- | -------------------------------------------------- |
 | **0** | Normal Mode (raw webcam feed)                      |
@@ -58,3 +58,5 @@ Includes multiple modes:
 | **+** | Camera Calibration (saves `calibration.npz`)       |
 | **-** | Augmented Reality (T-rex)                          |
 
+------------------------------------------------------------------
+## Aphisit st126130
