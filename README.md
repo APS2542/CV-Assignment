@@ -18,7 +18,7 @@ This project implements multiple computer vision functions:
 
 ----------------------------------------------------
 
-## Setup 
+## Setup and Run the Application
 1. Clone the repository.
    ```bash 
    https://github.com/APS2542/CV-Assignment.git
@@ -34,19 +34,16 @@ This project implements multiple computer vision functions:
 6. Install dependencies.
    ```bash
    uv pip install -r requirements.txt
-   
-## Run the Application
-
+7. Run the app.
    python app.py 
-
-
+-------------------------------------------------------------------
 ## Mode Controls
 - Press key 0 to return to Normal Mode
 - Press keys 1–9 to switch between other modes
 - Press + to run Camera Calibration
 - Press - to run Augmented Reality (AR)
 - Press ESC to quit
-
+------------------------------------------------------------------
 ## Mode Overview
 | Key   | Mode Description                                   |
 | ----- | -------------------------------------------------- |
