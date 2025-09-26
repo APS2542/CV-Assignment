@@ -1,5 +1,6 @@
 # **CV-APP-Assignment #1**
 Interactive Computer Vision demo application built with OpenCV.
+
 Includes multiple modes: 
 1. Convert image color between RGB ↔ Grey ↔ HSV  
 2. Contrast and brightness adjustment  
