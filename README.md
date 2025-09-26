@@ -1,11 +1,10 @@
-# **CV-APP-Assignment #1**
+# **Assignment 1** <img width="40" height="40" alt="image" src="https://github.com/user-attachments/assets/2446de68-f02a-4a60-887c-445158c3c9d4" />
 Interactive Computer Vision demo application.
-
 Includes multiple modes: 
 1. Convert image color between RGB ↔ Grey ↔ HSV  
 2. Contrast and brightness adjustment  
 3. Show image histogram  
-4. Gaussian filter with changeable parameter  
+4. Gaussian filter with changeable parameters  
 5. Bilateral filter with changeable parameters  
 6. Canny edge detection  
 7. Line detection using Hough Transform  
@@ -52,18 +51,18 @@ Includes multiple modes:
 ## **Mode Overview**
 | Key   | Mode Description                                   |
 | ----- | -------------------------------------------------- |
-| **0** | Normal Mode (raw webcam feed)                      |
+| **0** | Normal Mode                                        |
 | **1** | Convert image color (RGB ↔ Gray ↔ HSV)             |
 | **2** | Contrast & Brightness adjustment                   |
 | **3** | Image Histogram                                    |
 | **4** | Gaussian Filter (parameter changeable)             |
 | **5** | Bilateral Filter (parameter changeable)            |
 | **6** | Canny Edge Detection                               |
-| **7** | Hough Transform for Line Detection                 |
+| **7** | Line Detection (Hough Transform)                   |
 | **8** | Panorama Stitching                                 |
 | **9** | Image Translation, Rotation, Scaling               |
 | **+** | Camera Calibration (saves `calibration.npz`)       |
 | **-** | Augmented Reality (T-rex)                          |
 
 ------------------------------------------------------------------
-## Aphisit st126130
+## By Aphisit Jaemyaem st126130 
