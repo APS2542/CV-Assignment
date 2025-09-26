@@ -13,7 +13,10 @@ Includes multiple modes:
 9. Image translation, rotation, and scale  
 10. Camera calibration  
 11. Augmented Reality with TREX model projection
-
+----------------------------------------------------
+## **Requirements**
+- **Python 3.10 – 3.12** (tested on 3.12)  
+- Recommended: `uv` for managing virtual environments
 ----------------------------------------------------
 ## **Setup & Run the Application**
 1. Clone the repository.
@@ -22,17 +25,20 @@ Includes multiple modes:
 2. Into project directory.
    ```bash
    cd CV-Assignment
-4. Create a virtual environment.
+3. Install UV
+   ```bash
+   Follow the instruction from [uv official docs](https://docs.astral.sh/uv/getting-started/installation/).
+4. Create a virtual environment with uv
    ```bash
    uv venv .venv
 5. Activate the environment
    ```bash
    source .venv/bin/activate   # Linux / macOS
    .venv\Scripts\activate      # Windows PowerShell
-7. Install dependencies.
+6. Install dependencies.
    ```bash
    uv pip install -r requirements.txt
-8. Run the application
+7. Run the application
    ```bash
    python app.py 
 -------------------------------------------------------------------
